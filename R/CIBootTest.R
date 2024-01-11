@@ -26,7 +26,6 @@ BootyTest <- function(data = data, formula = NULL, statistic, nboot = 25,
     formula_dep <- characters[1]
     formula <- as.formula(paste(formula_dep ,"~", formula_str))
     }
-
   if (is.null(parallel)){
     if (bootstrap_sample) {
       if (bayes) {
@@ -37,14 +36,18 @@ BootyTest <- function(data = data, formula = NULL, statistic, nboot = 25,
           }
         }
         weights <- DirichletReg::rdirichlet(nboot, alpha)
-        output <- boot::boot(data = data, statistic = function(data, indices,...) statistic(data, indices, formula , p, ...), R = rep(1,nboot), weights = weights)
+        output <- boot::boot(data = data,
+                             statistic = function(data, indices, formula, ...) {statistic(data, formula, indices, p, ...)},
+                             R = rep(1,nboot),
+                             formula = formula,
+                             weights = weights)
       } else {
-        output <- boot::boot(data = data, statistic = function(data, indices,...) statistic(data, indices, formula , p, ...), R = nboot)
+        output <- boot::boot(data = data, statistic = function(data, indices, formula, ...) statistic(data, indices, formula , p, ...), R = nboot, formula = formula)
       }
     } else {
-      if (statistic == bagging_test){
+      if (identical(statistic, bagging_test)){
         output <- bagging_test(data, indices = NULL, formula, p, nboot)
-      } else if (statistic == xgboost_test) {
+      } else if (identical(statistic, xgboost_test)){
         output <- xgboost_test(data, indices = NULL, formula, p)
       }
     }
@@ -59,22 +62,31 @@ BootyTest <- function(data = data, formula = NULL, statistic, nboot = 25,
         }
         weights <- DirichletReg::rdirichlet(nboot, alpha)
         # Applying the parallel = "snow" option, which is only valid for windows computers
-        output <- boot::boot(data = data, statistic = function(data, indices,...) statistic(data, indices, formula , p, ...), R = rep(1,nboot), weights = weights, parallel = 'snow')
+        output <- boot::boot(data = data,
+                             statistic = function(data, indices, formula, ...) {statistic(data, indices, formula , p, ...)},
+                             R = rep(1,nboot),
+                             weights = weights,
+                             formula = formula,
+                             parallel = 'snow')
       } else {
-        output <- boot::boot(data = data, statistic = function(data, indices,...) statistic(data, indices, formula , p, ...), R = nboot, parallel = 'snow')
+        output <- boot::boot(data = data, statistic = function(data, indices, formula, ...) {statistic(data, indices, formula , p, ...)},
+                             R = nboot,
+                             formula = formula,
+                             parallel = 'snow')
       }
-    } else {
-      if (statistic == bagging_test){
-        output <- bagging_test(data, indices = NULL, formula, p, nboot)
-      } else if (statistic == xgboost_test) {
-        output <- xgboost_test(data, indices = NULL, formula, p)
+    } else { # Case with no bootstrapping
+      if (identical(statistic, bagging_test)){
+        output <- bagging_test(data, indices = NULL, formula, p, nboot,...)
+      } else if (identical(statistic, xgboost_test)){
+        output <- xgboost_test(data, indices = NULL, formula, p,...)
       }
     }
   }
   print(formula)
   return(output)
 }
+
 BootyTest(data = data, formula = NULL, dag = DAG, dag_cond = 2, statistic = bagging_test, p = 0.7, nboot = 10)
-BootyTest(data = data, formula = X3 ~ X4 + X2 + X1, statistic = xgboost_test, p = 0.7, nboot = 10)
+xgboosttest <- BootyTest(data = data, formula = X3 ~ X4 + X2 + X1, statistic = xgboost_test, p = 0.7, nboot = 250, bootstrap_sample = TRUE)
 
 

@@ -1,12 +1,12 @@
 xgboost_test <- function(data = NULL,
                          formula = NULL,
                          indices,
-                         p = 0.8,
+                         p = NULL,
                          objective = "reg:squarederror",
                          early_stopping = 10,
                          nrounds = 60,
                          eta = 0.1,
-                         max_depth = c(1,2,3,4,5),
+                         max_depth = c(2,4,6),
                          n_folds = 10,
                          ...) {
   if (is.null(indices)) {
@@ -14,8 +14,6 @@ xgboost_test <- function(data = NULL,
   } else {
     resample <- data[indices, ]
   }
-
-
 
   independent <- all.vars(formula)[-1]
   dependent <- update(formula, . ~ .)[[2]]
@@ -168,8 +166,7 @@ xgboost_test <- function(data = NULL,
                     params = params,
                     nrounds = best_nrounds,
                     verbose=0,
-                    nthread = 1,
-                    ...)
+                    nthread = 1)
 
   if (objective %in% c("binary:logistic", "multi:softmax")) {
     predictions <- predict(model2, test_matrix)
