@@ -2,3 +2,16 @@ Package: CIBootTest
 Type: Package
 Title: Test conditional independence 
 Version: 0.0.1.0
+Depends:
+    R (>= 4.3.2)
+Imports:
+    ipred,
+    boot,
+    xgboost,
+    caret,
+    Metrics,
+    DirichletReg
+Suggests:
+    ggplot2,
+    parallel,
+    
