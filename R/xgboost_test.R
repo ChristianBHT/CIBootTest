@@ -8,21 +8,17 @@ xgboost_test <- function(data = NULL,
                          eta = 0.1,
                          max_depth = c(1,2,3,4,5),
                          n_folds = 10,
-                         bootstrap_sample = FALSE,
-                         weights = NULL) {
-  if (is.null(data)) {
-    stop("Please provide some data")
-  }
-  if (is.null(p)) {
-    stop("Please provide the parameter p (size of training set)")
+                         ...) {
+  if (is.null(indices)) {
+    resample <- data
+  } else {
+    resample <- data[indices, ]
   }
 
-  if (!(class(formula) %in% "formula")) {
-    formula <- as.formula(formula)
-  }
+
+
   independent <- all.vars(formula)[-1]
   dependent <- update(formula, . ~ .)[[2]]
-  resample <- data
   # Check if there are factor variables in the feature set
   if (any(sapply(resample, is.factor))) {
     features <- resample[independent]
@@ -132,8 +128,7 @@ xgboost_test <- function(data = NULL,
                     nrounds = best_nrounds,
                     verbose=0,
                     nthread = 1)
-  # Get performance score model 1
-  # Check if the objective is classification or regression
+  # Get performance score model 1 if statement for separating classification and regression
   if (objective %in% c("binary:logistic", "multi:softmax")) {
     # Predict on test set using model 1
     predictions <- predict(model1, test_matrix)
@@ -189,13 +184,14 @@ xgboost_test <- function(data = NULL,
     mod2_metric1 <- Metrics::rmse(test_label, predictions)
     mod2_metric2 <- cor(predictions, test_label)^2
   }
-  result <- list()
-  result$mod1_metric1 <- mod1_metric1
-  result$mod1_metric2 <- mod1_metric2
-  result$mod2_metric1 <- mod2_metric1
-  result$mod2_metric2 <- mod2_metric2
-  result$diff_met1 <- mod1_metric1 - mod2_metric1
-  result$diff_met2 <-mod1_metric2 - mod2_metric2
+
+  if (objective %in% c("binary:logistic", "multi:softmax")) {
+    result <- c(mod1_metric1 - mod2_metric1, mod1_metric2 - mod2_metric2)
+    names(result) <- c("Difference Accuracy", "Difference Kappa score")
+  } else {
+    result <- c(mod1_metric1 - mod2_metric1, mod1_metric2 - mod2_metric2)
+    names(result) <- c("Difference RMSE", "Difference R-squared")
+  }
   return(result)
 }
 

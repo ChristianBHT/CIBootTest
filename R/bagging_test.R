@@ -6,20 +6,13 @@ bagging_test <- function(data = NULL,
                          nbagg = 50,
                          n_folds = 10,
                          ...) {
-  if (is.null(data)) {
-    stop("Please provide some data")
-  }
+
   if (is.null(indices)) {
     resample <- data
   } else {
     resample <- data[indices, ]
   }
-  if (is.null(p)) {
-    stop("Please provide the parameter p (size of training set)")
-  }
-  if (!(class(formula) %in% "formula")) {
-    formula <- as.formula(formula)
-  }
+
   independent <- all.vars(formula)[-1]
   dependent <- update(formula, . ~ .)[[2]]
   # Split the data
