@@ -1,13 +1,31 @@
-xgboost_test <- function(data = NULL,
-                         formula = NULL,
+#' Title
+#'
+#' @param formula
+#' @param data
+#' @param indices
+#' @param p
+#' @param objective
+#' @param early_stopping
+#' @param nrounds
+#' @param eta
+#' @param max_depth
+#' @param n_folds
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+xgboost_test <- function(formula = NULL,
+                         data = NULL,
                          indices,
                          p = NULL,
                          objective = "reg:squarederror",
                          early_stopping = 10,
                          nrounds = 60,
                          eta = 0.1,
-                         max_depth = c(2,4,6),
-                         n_folds = 10,
+                         max_depth = c(3,4,5),
+                         n_folds = 5,
                          ...) {
   if (is.null(indices)) {
     resample <- data
@@ -61,7 +79,7 @@ xgboost_test <- function(data = NULL,
         watchlist = watchlist,
         verbose = FALSE
       )
-      if (objective %in% c("binary:logistic", "multi:softmax")) {
+      if (inherits(objective, c("binary:logistic", "multi:softmax"))) {
         best_iteration <-  which.min(model$evaluation_log$test_logloss)
         min_cv <- model$evaluation_log$test_logloss[best_iteration]
       } else {
@@ -106,7 +124,7 @@ xgboost_test <- function(data = NULL,
 
   # Model1
   # Set best max depth
-  if (objective %in% c("multi:softmax")) {
+  if (inherits(objective, "multi:softmax")) {
     params <- list(
       eta = eta,
       max_depth = best_max_depth,
@@ -127,11 +145,11 @@ xgboost_test <- function(data = NULL,
                     verbose=0,
                     nthread = 1)
   # Get performance score model 1 if statement for separating classification and regression
-  if (objective %in% c("binary:logistic", "multi:softmax")) {
+  if (inherits(objective, c("binary:logistic", "multi:softmax"))) {
     # Predict on test set using model 1
     predictions <- predict(model1, test_matrix)
     # Predictions of binary outcome are probabilities
-    if (objective %in% "binary:logistic") {
+    if (inherits(objective, "binary:logistic")) {
       predictions <- ifelse(predictions > 0.5, 1, 0)
     }
     # Confusion Matrix
@@ -149,7 +167,7 @@ xgboost_test <- function(data = NULL,
     mod1_metric2 <- cor(predictions, test_label)^2
   }
   # Replacing the variable with the reshuffled variable
-  training[independent[[1]]] <- sample(training[[independent[1]]])
+  training[independent[[1]]] <- sample(training[[independent[1]]]) # Se på R()
   # Creating new feature set, same steps as above
   if (any(sapply(training, is.factor))) {
     model2_train_features <- training[independent]
@@ -168,9 +186,9 @@ xgboost_test <- function(data = NULL,
                     verbose=0,
                     nthread = 1)
 
-  if (objective %in% c("binary:logistic", "multi:softmax")) {
+  if (inherits(objective, c("binary:logistic", "multi:softmax"))) {
     predictions <- predict(model2, test_matrix)
-    if (objective %in% "binary:logistic") {
+    if (inherits(objective, "binary:logistic")) {
       predictions <- ifelse(predictions > 0.5, 1, 0)
     }
     conf_matrix <- caret::confusionMatrix(as.factor(predictions), as.factor(test_label))
@@ -182,7 +200,7 @@ xgboost_test <- function(data = NULL,
     mod2_metric2 <- cor(predictions, test_label)^2
   }
 
-  if (objective %in% c("binary:logistic", "multi:softmax")) {
+  if (inherits(objective, c("binary:logistic", "multi:softmax"))) {
     result <- c(mod1_metric1 - mod2_metric1, mod1_metric2 - mod2_metric2)
     names(result) <- c("Difference Accuracy", "Difference Kappa score")
   } else {

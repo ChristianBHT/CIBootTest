@@ -1,7 +1,21 @@
 
-bagging_test <- function(data = NULL,
+#' Title
+#'
+#' @param formula
+#' @param data
+#' @param indices
+#' @param p
+#' @param nbagg
+#' @param n_folds
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+bagging_test <- function(formula = NULL,
+                         data = NULL,
                          indices,
-                         formula = NULL,
                          p = NULL,
                          nbagg = 50,
                          n_folds = 10,
@@ -22,7 +36,7 @@ bagging_test <- function(data = NULL,
   # Model1
   model1 <- ipred::bagging(formula = formula, data = training, coob = TRUE, nbagg = nbagg)
   # Check if outcome is a factor variable (binary variables must be factor var.))
-  if (class(data[[dependent]]) %in% "factor") {
+  if (inherits(data[[dependent]], "factor")) { #inherit
     # Predict on test set using model 1
     predictions <- predict(model1, newdata=testing)
     # Confusion Matrix
@@ -46,8 +60,8 @@ bagging_test <- function(data = NULL,
   # Replacing the variable with the reshuffled variable
   training[independent[[1]]] <- sample(training[[independent[1]]])
   # model2
-  model2 <- ipred::bagging(formula = formula, data = training,coob = TRUE)
-  if (class(data[[dependent]]) %in% "factor") {
+  model2 <- ipred::bagging(formula = formula, data = training, coob = TRUE)
+  if (inherits(data[[dependent]], "factor")) {
     # Predict on test set using model 1
     predictions <- predict(model2, newdata=testing)
     # Confusion Matrix
@@ -69,7 +83,7 @@ bagging_test <- function(data = NULL,
     }
   }
 
-  if (class(data[[dependent]]) %in% "factor") {
+  if (inherits(data[[dependent]], "factor")) {
     result <- c(mod1_metric1 - mod2_metric1, mod1_metric2 - mod2_metric2)
     names(result) <- c("Difference Accuracy", "Difference Kappa score")
   } else {
