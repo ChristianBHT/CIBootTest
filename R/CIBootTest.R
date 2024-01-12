@@ -61,11 +61,11 @@ BootyTest <- function(formula = NULL, data = data, statistic, nboot = 25,
   if (is.null(formula) & is.null(dag)) {
     stop("Please provide a R-formula for the condition to be tested, i.e. Y _||_ X | Z -> Y ~ X + Z.
          Or provide a dagitty DAG with the option: dag = 'your DAG' and dag_cond = '# of the condition in need of testing'")
-  } else if (inherits(!class(formula), "formula") & !is.null(formula)) {
+  } else if (!inherits(formula, "formula") & !is.null(formula)) {
     formula <- as.formula(formula)
   } else if (is.null(formula) & !is.null(dag)) {
     # Use provided DAG and extract the testable condition
-    if (inherits(!class(dag), 'dagitty')) {
+    if (!inherits(dag, 'dagitty')) {
       stop('The provided DAG needs to be a dagitty object')
     }
     characters <- unlist(dagitty::impliedConditionalIndependencies(dag)[dag_cond])
@@ -136,13 +136,14 @@ BootyTest <- function(formula = NULL, data = data, statistic, nboot = 25,
 
   return(output)
 }
+
 set.seed(9)
 data <- data_gen(2000)
-test <- BootyTest(data = data, formula = NULL, dag = DAG, dag_cond = 2, statistic = bagging_test, p = 0.9, nboot = 100)
 baggingtest <- BootyTest(formula = X3 ~ X4 + X2 + X1, data = data, statistic = bagging_test, p = 0.9, nboot = 100)
+
 # Regular bootstrap
-NoBayes_test <- BootyTest(formula = X3 ~ X4 + X2 + X1, data = data, statistic = bagging_test, p = 0.9, nboot = 100, bayes = FALSE)
-hist(NoBayes_test$t[,1])
+my_booty <- BootyTest(formula = X3 ~ X4 + X2 + X1, data = data, statistic = bagging_test, p = 0.9, nboot = 100, bayes = FALSE)
+
 # With parallel computing
 parallel_test <- BootyTest(formula = X3 ~ X4 + X2 + X1, data = data, statistic = bagging_test, p = 0.9, nboot = 200, parallel = T)
 hist(parallel_test$t[,1])
