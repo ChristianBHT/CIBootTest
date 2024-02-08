@@ -23,7 +23,17 @@ X2 -> X3
 X2 -> X4
 }
 ')
+model6 <- function(N){
+  X1 = rnorm(N,1,1)
+  X2 = rnorm(N,0,1)
+  X3 = rnorm(N,exp(X2*X1),1)
+  X4 = rnorm(N,X2*X1,1)
+  df <- data.frame(X1,X2,X3,X4)
+  return(df)
+}
+
 parallel_test <- BootyTest(data = data, dag = DAG, dag_cond = 2, statistic = bagging_test, p = 0.9, nboot = 100 )
 hist(parallel_test$t[,1])
 parallel_xgboosttest <- BootyTest(formula = X3 ~ X4 + X2 + X1, data = data, statistic = xgboost_test, p = 0.9, nboot = 200, parallel = T)
 hist(parallel_xgboosttest$t[,1])
+
